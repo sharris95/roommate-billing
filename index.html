@@ -180,12 +180,12 @@
       "Apr 2025": {
         osa: { electric: 0 },      // Update with actual payments
         precious: { electric: 0 }, // Update with actual payments
-        jay: { electric: 72.22 }       // Update with actual payments
+        jay: { electric: 72.22 }   // Update with actual payments
       },
       "May 2025": {
         osa: { electric: 0 },      // Update with actual payments
         precious: { electric: 193.68 }, // Update with actual payments 
-        jay: { electric: 193.68 }       // Update with actual payments
+        jay: { electric: 0 }       // Updated to remove Jay's payment for May
       }
     };
 
@@ -229,6 +229,10 @@
         Object.keys(monthData).forEach(month => {
           const userLower = user.toLowerCase();
           const { electricTotal, extraFee } = monthData[month];
+          
+          // Skip calculation for months with no electric bill data
+          if (electricTotal === 0) return;
+          
           const electricShare = electricTotal / 3;
           const pymntPlanExtraOwed = (userLower === "jay") ? 0 : extraFee;
           const electricPaid = (monthlyPayments[month][userLower] || {}).electric || 0;
@@ -237,7 +241,8 @@
           totalOutstanding += outstanding;
         });
         
-        totals[user] = totalOutstanding;
+        // Make sure all balances are positive or zero
+        totals[user] = Math.max(0, totalOutstanding);
       });
       
       return totals;
@@ -253,7 +258,9 @@
 
       roommates.forEach(user => {
         const rowData = monthResults[user];
-        totalOutstanding += rowData.outstanding;
+        // Ensure each individual monthly balance is never negative
+        const displayOutstanding = Math.max(0, rowData.outstanding);
+        totalOutstanding += displayOutstanding;
         
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -261,7 +268,7 @@
           <td>$${rowData.electricOwed.toFixed(2)}</td>
           <td>$${rowData.electricPaid.toFixed(2)}</td>
           <td>$${rowData.pymntPlanExtraOwed.toFixed(2)}</td>
-          <td>$${rowData.outstanding.toFixed(2)}</td>
+          <td>$${displayOutstanding.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
       });
@@ -291,7 +298,7 @@
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${user}</td>
-          <td class="${outstanding < 0 ? 'negative' : ''}">${outstanding < 0 ? '−$' + Math.abs(outstanding).toFixed(2) : '$' + outstanding.toFixed(2)}</td>
+          <td>$${outstanding.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
       });
@@ -301,7 +308,7 @@
       totalRow.className = "total-row";
       totalRow.innerHTML = `
         <td>Grand Total</td>
-        <td class="${grandTotal < 0 ? 'negative' : ''}">${grandTotal < 0 ? '−$' + Math.abs(grandTotal).toFixed(2) : '$' + grandTotal.toFixed(2)}</td>
+        <td>$${grandTotal.toFixed(2)}</td>
       `;
       tbody.appendChild(totalRow);
     }
