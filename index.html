@@ -13,345 +13,238 @@
       background: #f9f9f9;
       color: #333;
     }
-    h1, h2 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .summary-container {
+    h1, h2 { text-align: center; }
+    .summary-container, .monthly-details {
       background: #fff;
       border-radius: 8px;
       padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       margin-bottom: 30px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .totals-table {
+    .totals-table, table {
       width: 100%;
       border-collapse: collapse;
-      margin: 15px 0;
-      background: #fff;
-    }
-    .month-selector {
-      text-align: center;
-      margin: 20px 0;
-    }
-    .section-toggle {
-      text-align: center;
-      margin: 20px 0;
-    }
-    .toggle-btn {
-      background: #4a7bab;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .toggle-btn:hover {
-      background: #3a6790;
-    }
-    .monthly-details {
-      display: none;
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    select {
-      padding: 5px 8px;
-      font-size: 16px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
     }
     th, td {
       padding: 10px;
       border: 1px solid #ddd;
       text-align: center;
     }
-    th {
-      background: #f0f0f0;
+    th { background: #f0f0f0; }
+    .total-row { font-weight: bold; background: #f5f5f5; }
+    .toggle-btn {
+      display: block;
+      margin: 0 auto 20px;
+      background: #4a7bab;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    .total-row {
-      font-weight: bold;
-      background: #f5f5f5;
-    }
-    .negative {
-      color: #d32f2f;
-    }
-    .note {
-      font-style: italic;
-      text-align: center;
-      margin-top: 20px;
-      color: #666;
-    }
-    .last-updated {
-      text-align: right;
-      font-size: 14px;
-      color: #777;
-      margin-top: 30px;
-    }
+    .toggle-btn:hover { background: #3a6790; }
+    select { padding: 5px 8px; font-size: 16px; }
+    .note { font-style: italic; text-align: center; color: #666; }
+    .last-updated { text-align: right; font-size: 14px; color: #777; }
   </style>
 </head>
 <body>
   <h1>Roommate Billing Tracker</h1>
-  
-  <!-- Summary Section (Always Visible) -->
+
   <div class="summary-container">
     <h2>Total Outstanding Balances</h2>
     <table class="totals-table">
       <thead>
-        <tr>
-          <th>Roommate</th>
-          <th>Total Outstanding</th>
-        </tr>
+        <tr><th>Roommate</th><th>Total Outstanding</th></tr>
       </thead>
-      <tbody id="totalSummaryTable">
-        <!-- Total summary data will load here -->
-      </tbody>
+      <tbody id="totalSummaryTable"></tbody>
     </table>
+    <p class="note">Note: April and May 2025 data need to be updated</p>
   </div>
 
-  <!-- Toggle Button for Monthly Details -->
-  <div class="section-toggle">
-    <button id="toggleDetails" class="toggle-btn">Show Monthly Breakdown</button>
-  </div>
+  <button id="toggleDetails" class="toggle-btn">Show Monthly Breakdown</button>
 
-  <!-- Monthly Details Section (Initially Hidden) -->
-  <div id="monthlyDetails" class="monthly-details">
-    <!-- Month Selector -->
-    <div class="month-selector">
-      <label for="monthSelector">Select Month: </label>
+  <div id="monthlyDetails" class="monthly-details" style="display:none;">
+    <div style="text-align:center; margin-bottom:20px;">
+      <label for="monthSelector">Select Month:</label>
       <select id="monthSelector">
-        <option value="Jan 2025">January 2025</option>
-        <option value="Feb 2025">February 2025</option>
-        <option value="Mar 2025">March 2025</option>
-        <option value="Apr 2025">April 2025</option>
-        <option value="May 2025">May 2025</option>
+        <option>Jan 2025</option>
+        <option>Feb 2025</option>
+        <option>Mar 2025</option>
+        <option>Apr 2025</option>
+        <option>May 2025</option>
       </select>
     </div>
-
-    <!-- Billing Overview Table -->
     <table>
       <thead>
         <tr>
           <th>Roommate</th>
           <th>Electric Owed</th>
           <th>Electric Paid</th>
-          <th>Pymnt Plan Extra</th>
-          <th>One-Time Charge</th>
+          <th>Extra Fee</th>
+          <th>One-Time</th>
           <th>Outstanding</th>
         </tr>
       </thead>
-      <tbody id="billingTableBody">
-        <!-- Monthly data will load here -->
-      </tbody>
+      <tbody id="billingTableBody"></tbody>
     </table>
   </div>
 
-  <div class="last-updated">
-    Last updated: May 12, 2025
-  </div>
+  <div class="last-updated">Last updated: May 12, 2025</div>
 
   <script>
-    // Each month's total electric bill and extra fee (for Osa & Precious).
-    // Jay does not owe any extra fee.
-    const monthData = {
-      "Jan 2025": { electricTotal: 0.00, extraFee: 0 },    // Added January for deposit payment
-      "Feb 2025": { electricTotal: 752.00, extraFee: 200 },
-      "Mar 2025": { electricTotal: 777.52, extraFee: 200 },
-      "Apr 2025": { electricTotal: 0.00, extraFee: 200 },  // Replace with actual April bill
-      "May 2025": { electricTotal: 0.00, extraFee: 200 }   // Replace with actual May bill
-    };
-
-    // Payments made so far for each roommate per month.
-    // Update these values as new payments come in.
-    const monthlyPayments = {
+    const billingData = {
       "Jan 2025": {
-        osa: { electric: 0, oneTimeCharge: 466 },    // One-third of $1400 deposit
-        precious: { electric: 0, oneTimeCharge: 466 }, // One-third of $1400 deposit
-        jay: { electric: 0, oneTimeCharge: 0 }     // Jay doesn't owe part of the deposit
+        electricTotal: 0,
+        extraFee:      0,
+        payments: {
+          osa:      { electric: 0,   oneTimeCharge: 466 },
+          precious: { electric: 0,   oneTimeCharge: 466 },
+          jay:      { electric: 0,   oneTimeCharge:   0 }
+        }
       },
       "Feb 2025": {
-        osa: { electric: 398.53, oneTimeCharge: 0 },
-        precious: { electric: 466, oneTimeCharge: 0 },
-        jay: { electric: 188.17, oneTimeCharge: 0 }
+        electricTotal: 752,
+        extraFee:      200,
+        payments: {
+          osa:      { electric: 398.53, oneTimeCharge: 0 },
+          precious: { electric: 466,    oneTimeCharge: 0 },
+          jay:      { electric: 188.17, oneTimeCharge: 0 }
+        }
       },
       "Mar 2025": {
-        osa: { electric: 0, oneTimeCharge: 0 },
-        precious: { electric: 0, oneTimeCharge: 0 },
-        jay: { electric: 94.38, oneTimeCharge: 0 }
+        electricTotal: 777.52,
+        extraFee:      200,
+        payments: {
+          osa:      { electric: 0,   oneTimeCharge: 0 },
+          precious: { electric: 0,   oneTimeCharge: 0 },
+          jay:      { electric: 94.38,oneTimeCharge: 0 }
+        }
       },
       "Apr 2025": {
-        osa: { electric: 0, oneTimeCharge: 0 },      // Update with actual payments
-        precious: { electric: 0, oneTimeCharge: 0 }, // Update with actual payments
-        jay: { electric: 72.22, oneTimeCharge: 0 }   // Update with actual payments
+        electricTotal: 0,    // ← put April’s bill here
+        extraFee:      200,
+        payments: {
+          osa:      { electric: 0,    oneTimeCharge: 0 },
+          precious: { electric: 0,    oneTimeCharge: 0 },
+          jay:      { electric: 72.22, oneTimeCharge: 0 }
+        }
       },
       "May 2025": {
-        osa: { electric: 0, oneTimeCharge: 0 },      // Update with actual payments
-        precious: { electric: 193.68, oneTimeCharge: 0 }, // Update with actual payments 
-        jay: { electric: 0, oneTimeCharge: 0 }       // Updated to remove Jay's payment for May
+        electricTotal: 0,    // ← put May’s bill here
+        extraFee:      200,
+        payments: {
+          osa:      { electric: 0,    oneTimeCharge: 0 },
+          precious: { electric: 193.68,oneTimeCharge: 0 },
+          jay:      { electric: 0,    oneTimeCharge: 0 }
+        }
       }
     };
 
-    const roommates = ["Osa", "Precious", "Jay"];
+    const roommates = ["osa","precious","jay"];
 
-    function calculateMonthData(selectedMonth) {
-      const data = {};
-      const { electricTotal, extraFee } = monthData[selectedMonth];
-      const electricShare = electricTotal / 3; // each roommate's share (assuming 3 roommates)
-
-      roommates.forEach(user => {
-        const userLower = user.toLowerCase();
-        // Osa & Precious owe extraFee, Jay does not
-        const pymntPlanExtraOwed = (userLower === "jay") ? 0 : extraFee;
-        const electricOwed = electricShare;
-
-        // What they've paid toward electric
-        const userPayments = monthlyPayments[selectedMonth][userLower] || { electric: 0, oneTimeCharge: 0 };
-        const electricPaid = userPayments.electric;
-        const oneTimeCharge = userPayments.oneTimeCharge || 0;
-
-        // Outstanding is total owed minus what they've paid toward electric, plus any one-time charges
-        const outstanding = (electricOwed + pymntPlanExtraOwed) - electricPaid + oneTimeCharge;
-
-        data[user] = {
-          electricOwed,
-          electricPaid,
-          pymntPlanExtraOwed,
-          oneTimeCharge,
-          outstanding
+    function calcMonth(monthKey) {
+      const m = billingData[monthKey];
+      const share = m.electricTotal / 3;
+      const out = {};
+      roommates.forEach(r => {
+        const p = m.payments[r];
+        const extra = (r==="jay")?0:m.extraFee;
+        const owed = share + extra;
+        const paid = p.electric;
+        const oneT = p.oneTimeCharge;
+        out[r] = {
+          electricOwed:      share,
+          electricPaid:      paid,
+          pymntPlanExtraOwed: extra,
+          oneTimeCharge:     oneT,
+          outstanding:       Math.max(0, owed - paid + oneT)
         };
       });
-      return data;
+      return out;
     }
 
-    function calculateTotalOutstanding() {
-      const totals = {};
-      
-      roommates.forEach(user => {
-        let totalOutstanding = 0;
-        
-        // Loop through all months and sum up the outstanding balances
-        Object.keys(monthData).forEach(month => {
-          const userLower = user.toLowerCase();
-          const { electricTotal, extraFee } = monthData[month];
-          
-          // For January, only consider the one-time charge (deposit payment)
-          if (month === "Jan 2025") {
-            const oneTimeCharge = (monthlyPayments[month][userLower] || {}).oneTimeCharge || 0;
-            totalOutstanding += oneTimeCharge;
-            return;
-          }
-          
-          // Skip calculation for other months with no electric bill data
-          if (electricTotal === 0) return;
-          
-          const electricShare = electricTotal / 3;
-          const pymntPlanExtraOwed = (userLower === "jay") ? 0 : extraFee;
-          const electricPaid = (monthlyPayments[month][userLower] || {}).electric || 0;
-          const oneTimeCharge = (monthlyPayments[month][userLower] || {}).oneTimeCharge || 0;
-          
-          const outstanding = (electricShare + pymntPlanExtraOwed) - electricPaid + oneTimeCharge;
-          totalOutstanding += outstanding;
-        });
-        
-        // Make sure all balances are positive or zero
-        totals[user] = Math.max(0, totalOutstanding);
+    function calcTotals() {
+      const totals = { osa:0, precious:0, jay:0 };
+      Object.keys(billingData).forEach(m => {
+        const month = billingData[m];
+        if (m==="Jan 2025") {
+          roommates.forEach(r => {
+            totals[r] += month.payments[r].oneTimeCharge;
+          });
+        } else {
+          if (month.electricTotal===0) return;
+          const share = month.electricTotal/3;
+          roommates.forEach(r => {
+            const extra = (r==="jay")?0:month.extraFee;
+            const paid = month.payments[r].electric;
+            const oneT = month.payments[r].oneTimeCharge;
+            totals[r] += Math.max(0, share + extra - paid + oneT);
+          });
+        }
       });
-      
       return totals;
     }
 
-    function renderMonthlyTable() {
-      const selectedMonth = document.getElementById("monthSelector").value;
-      const monthResults = calculateMonthData(selectedMonth);
-      const tbody = document.getElementById("billingTableBody");
-      tbody.innerHTML = "";
-
-      let totalOutstanding = 0;
-
-      roommates.forEach(user => {
-        const rowData = monthResults[user];
-        // Ensure each individual monthly balance is never negative
-        const displayOutstanding = Math.max(0, rowData.outstanding);
-        totalOutstanding += displayOutstanding;
-        
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${user}</td>
-          <td>${rowData.electricOwed.toFixed(2)}</td>
-          <td>${rowData.electricPaid.toFixed(2)}</td>
-          <td>${rowData.pymntPlanExtraOwed.toFixed(2)}</td>
-          <td>${rowData.oneTimeCharge.toFixed(2)}</td>
-          <td>${displayOutstanding.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      // Add a total row
-      const totalRow = document.createElement("tr");
-      totalRow.className = "total-row";
-      totalRow.innerHTML = `
-        <td>Total</td>
-        <td colspan="4"></td>
-        <td>${totalOutstanding.toFixed(2)}</td>
-      `;
-      tbody.appendChild(totalRow);
-    }
-
-    function renderTotalSummary() {
-      const totals = calculateTotalOutstanding();
+    function renderSummary() {
+      const t = calcTotals();
       const tbody = document.getElementById("totalSummaryTable");
       tbody.innerHTML = "";
-      
-      let grandTotal = 0;
-      
-      roommates.forEach(user => {
-        const outstanding = totals[user];
-        grandTotal += outstanding;
-        
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${user}</td>
-          <td>$${outstanding.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
+      let grand = 0;
+      Object.entries(t).forEach(([r,val])=>{
+        grand += val;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${r.charAt(0).toUpperCase()+r.slice(1)}</td><td>$${val.toFixed(2)}</td>`;
+        tbody.appendChild(tr);
       });
-      
-      // Add grand total row
-      const totalRow = document.createElement("tr");
-      totalRow.className = "total-row";
-      totalRow.innerHTML = `
-        <td>Grand Total</td>
-        <td>$${grandTotal.toFixed(2)}</td>
-      `;
-      tbody.appendChild(totalRow);
+      const tr = document.createElement("tr");
+      tr.className="total-row";
+      tr.innerHTML = `<td>Grand Total</td><td>$${grand.toFixed(2)}</td>`;
+      tbody.appendChild(tr);
     }
 
-    // Toggle monthly details section
-    document.getElementById("toggleDetails").addEventListener("click", function() {
-      const detailsSection = document.getElementById("monthlyDetails");
-      const toggleBtn = document.getElementById("toggleDetails");
-      
-      if (detailsSection.style.display === "block") {
-        detailsSection.style.display = "none";
-        toggleBtn.textContent = "Show Monthly Breakdown";
-      } else {
-        detailsSection.style.display = "block";
-        toggleBtn.textContent = "Hide Monthly Breakdown";
-      }
-    });
+    function renderMonth() {
+      const monthKey = document.getElementById("monthSelector").value;
+      const data = calcMonth(monthKey);
+      const tbody = document.getElementById("billingTableBody");
+      tbody.innerHTML = "";
+      let tot=0;
+      Object.entries(data).forEach(([r,o])=>{
+        tot += o.outstanding;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.charAt(0).toUpperCase()+r.slice(1)}</td>
+          <td>${o.electricOwed.toFixed(2)}</td>
+          <td>${o.electricPaid.toFixed(2)}</td>
+          <td>${o.pymntPlanExtraOwed.toFixed(2)}</td>
+          <td>${o.oneTimeCharge.toFixed(2)}</td>
+          <td>${o.outstanding.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      const tr = document.createElement("tr");
+      tr.className="total-row";
+      tr.innerHTML = `<td>Total</td><td colspan="4"></td><td>${tot.toFixed(2)}</td>`;
+      tbody.appendChild(tr);
+    }
 
-    // Event listeners
-    document.getElementById("monthSelector").addEventListener("change", renderMonthlyTable);
-    
-    // Initialize tables on page load
-    window.addEventListener("DOMContentLoaded", function() {
-      renderTotalSummary();
-      renderMonthlyTable();
+    document.getElementById("toggleDetails").onclick = () => {
+      const d = document.getElementById("monthlyDetails");
+      const btn = document.getElementById("toggleDetails");
+      if (d.style.display==="none") {
+        d.style.display="block";
+        btn.textContent="Hide Monthly Breakdown";
+      } else {
+        d.style.display="none";
+        btn.textContent="Show Monthly Breakdown";
+      }
+    };
+
+    document.getElementById("monthSelector").onchange = renderMonth;
+
+    window.addEventListener("DOMContentLoaded", ()=>{
+      renderSummary();
+      renderMonth();
     });
   </script>
 </body>
