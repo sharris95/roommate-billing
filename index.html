@@ -126,6 +126,7 @@
     <div class="month-selector">
       <label for="monthSelector">Select Month: </label>
       <select id="monthSelector">
+        <option value="Jan 2025">January 2025</option>
         <option value="Feb 2025">February 2025</option>
         <option value="Mar 2025">March 2025</option>
         <option value="Apr 2025">April 2025</option>
@@ -141,6 +142,7 @@
           <th>Electric Owed</th>
           <th>Electric Paid</th>
           <th>Pymnt Plan Extra</th>
+          <th>One-Time Charge</th>
           <th>Outstanding</th>
         </tr>
       </thead>
@@ -158,6 +160,7 @@
     // Each month's total electric bill and extra fee (for Osa & Precious).
     // Jay does not owe any extra fee.
     const monthData = {
+      "Jan 2025": { electricTotal: 0.00, extraFee: 0 },    // Added January for deposit payment
       "Feb 2025": { electricTotal: 752.00, extraFee: 200 },
       "Mar 2025": { electricTotal: 777.52, extraFee: 200 },
       "Apr 2025": { electricTotal: 0.00, extraFee: 200 },  // Replace with actual April bill
@@ -167,25 +170,30 @@
     // Payments made so far for each roommate per month.
     // Update these values as new payments come in.
     const monthlyPayments = {
+      "Jan 2025": {
+        osa: { electric: 0, oneTimeCharge: 466 },    // One-third of $1400 deposit
+        precious: { electric: 0, oneTimeCharge: 466 }, // One-third of $1400 deposit
+        jay: { electric: 0, oneTimeCharge: 0 }     // Jay doesn't owe part of the deposit
+      },
       "Feb 2025": {
-        osa: { electric: 398.53 },
-        precious: { electric: 466 },
-        jay: { electric: 188.17 }
+        osa: { electric: 398.53, oneTimeCharge: 0 },
+        precious: { electric: 466, oneTimeCharge: 0 },
+        jay: { electric: 188.17, oneTimeCharge: 0 }
       },
       "Mar 2025": {
-        osa: { electric: 0 },
-        precious: { electric: 0 },
-        jay: { electric: 94.38 }
+        osa: { electric: 0, oneTimeCharge: 0 },
+        precious: { electric: 0, oneTimeCharge: 0 },
+        jay: { electric: 94.38, oneTimeCharge: 0 }
       },
       "Apr 2025": {
-        osa: { electric: 0 },      // Update with actual payments
-        precious: { electric: 0 }, // Update with actual payments
-        jay: { electric: 72.22 }   // Update with actual payments
+        osa: { electric: 0, oneTimeCharge: 0 },      // Update with actual payments
+        precious: { electric: 0, oneTimeCharge: 0 }, // Update with actual payments
+        jay: { electric: 72.22, oneTimeCharge: 0 }   // Update with actual payments
       },
       "May 2025": {
-        osa: { electric: 0 },      // Update with actual payments
-        precious: { electric: 193.68 }, // Update with actual payments 
-        jay: { electric: 0 }       // Updated to remove Jay's payment for May
+        osa: { electric: 0, oneTimeCharge: 0 },      // Update with actual payments
+        precious: { electric: 193.68, oneTimeCharge: 0 }, // Update with actual payments 
+        jay: { electric: 0, oneTimeCharge: 0 }       // Updated to remove Jay's payment for May
       }
     };
 
@@ -203,16 +211,18 @@
         const electricOwed = electricShare;
 
         // What they've paid toward electric
-        const userPayments = monthlyPayments[selectedMonth][userLower] || { electric: 0 };
+        const userPayments = monthlyPayments[selectedMonth][userLower] || { electric: 0, oneTimeCharge: 0 };
         const electricPaid = userPayments.electric;
+        const oneTimeCharge = userPayments.oneTimeCharge || 0;
 
-        // Outstanding is total owed minus what they've paid toward electric
-        const outstanding = (electricOwed + pymntPlanExtraOwed) - electricPaid;
+        // Outstanding is total owed minus what they've paid toward electric, plus any one-time charges
+        const outstanding = (electricOwed + pymntPlanExtraOwed) - electricPaid + oneTimeCharge;
 
         data[user] = {
           electricOwed,
           electricPaid,
           pymntPlanExtraOwed,
+          oneTimeCharge,
           outstanding
         };
       });
@@ -230,14 +240,22 @@
           const userLower = user.toLowerCase();
           const { electricTotal, extraFee } = monthData[month];
           
-          // Skip calculation for months with no electric bill data
+          // For January, only consider the one-time charge (deposit payment)
+          if (month === "Jan 2025") {
+            const oneTimeCharge = (monthlyPayments[month][userLower] || {}).oneTimeCharge || 0;
+            totalOutstanding += oneTimeCharge;
+            return;
+          }
+          
+          // Skip calculation for other months with no electric bill data
           if (electricTotal === 0) return;
           
           const electricShare = electricTotal / 3;
           const pymntPlanExtraOwed = (userLower === "jay") ? 0 : extraFee;
           const electricPaid = (monthlyPayments[month][userLower] || {}).electric || 0;
+          const oneTimeCharge = (monthlyPayments[month][userLower] || {}).oneTimeCharge || 0;
           
-          const outstanding = (electricShare + pymntPlanExtraOwed) - electricPaid;
+          const outstanding = (electricShare + pymntPlanExtraOwed) - electricPaid + oneTimeCharge;
           totalOutstanding += outstanding;
         });
         
@@ -265,10 +283,11 @@
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${user}</td>
-          <td>$${rowData.electricOwed.toFixed(2)}</td>
-          <td>$${rowData.electricPaid.toFixed(2)}</td>
-          <td>$${rowData.pymntPlanExtraOwed.toFixed(2)}</td>
-          <td>$${displayOutstanding.toFixed(2)}</td>
+          <td>${rowData.electricOwed.toFixed(2)}</td>
+          <td>${rowData.electricPaid.toFixed(2)}</td>
+          <td>${rowData.pymntPlanExtraOwed.toFixed(2)}</td>
+          <td>${rowData.oneTimeCharge.toFixed(2)}</td>
+          <td>${displayOutstanding.toFixed(2)}</td>
         `;
         tbody.appendChild(row);
       });
@@ -278,8 +297,8 @@
       totalRow.className = "total-row";
       totalRow.innerHTML = `
         <td>Total</td>
-        <td colspan="3"></td>
-        <td>$${totalOutstanding.toFixed(2)}</td>
+        <td colspan="4"></td>
+        <td>${totalOutstanding.toFixed(2)}</td>
       `;
       tbody.appendChild(totalRow);
     }
