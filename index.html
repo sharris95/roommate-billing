@@ -9,17 +9,53 @@
       font-family: Arial, sans-serif;
       max-width: 800px;
       margin: 20px auto;
-      padding: 0 10px;
+      padding: 0 20px;
       background: #f9f9f9;
       color: #333;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
       margin-bottom: 10px;
+    }
+    .summary-container {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .totals-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background: #fff;
     }
     .month-selector {
       text-align: center;
       margin: 20px 0;
+    }
+    .section-toggle {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .toggle-btn {
+      background: #4a7bab;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .toggle-btn:hover {
+      background: #3a6790;
+    }
+    .monthly-details {
+      display: none;
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     select {
       padding: 5px 8px;
@@ -29,7 +65,6 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
-      background: #fff;
     }
     th, td {
       padding: 10px;
@@ -39,42 +74,94 @@
     th {
       background: #f0f0f0;
     }
+    .total-row {
+      font-weight: bold;
+      background: #f5f5f5;
+    }
+    .negative {
+      color: #d32f2f;
+    }
+    .note {
+      font-style: italic;
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+    }
+    .last-updated {
+      text-align: right;
+      font-size: 14px;
+      color: #777;
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
   <h1>Roommate Billing Tracker</h1>
   
-  <!-- Month Selector -->
-  <div class="month-selector">
-    <label for="monthSelector">Select Month: </label>
-    <select id="monthSelector">
-      <option value="Feb 2025">February 2025</option>
-      <option value="Mar 2025">March 2025</option>
-    </select>
+  <!-- Summary Section (Always Visible) -->
+  <div class="summary-container">
+    <h2>Total Outstanding Balances</h2>
+    <table class="totals-table">
+      <thead>
+        <tr>
+          <th>Roommate</th>
+          <th>Total Outstanding</th>
+        </tr>
+      </thead>
+      <tbody id="totalSummaryTable">
+        <!-- Total summary data will load here -->
+      </tbody>
+    </table>
+    <p class="note">Note: April and May 2025 data need to be updated with actual values</p>
   </div>
 
-  <!-- Billing Overview Table -->
-  <table>
-    <thead>
-      <tr>
-        <th>Roommate</th>
-        <th>Electric Owed</th>
-        <th>Electric Paid</th>
-        <th>Pymnt Plan Extra Owed</th>
-        <th>Outstanding</th>
-      </tr>
-    </thead>
-    <tbody id="billingTableBody">
-      <!-- Data will load here -->
-    </tbody>
-  </table>
+  <!-- Toggle Button for Monthly Details -->
+  <div class="section-toggle">
+    <button id="toggleDetails" class="toggle-btn">Show Monthly Breakdown</button>
+  </div>
+
+  <!-- Monthly Details Section (Initially Hidden) -->
+  <div id="monthlyDetails" class="monthly-details">
+    <!-- Month Selector -->
+    <div class="month-selector">
+      <label for="monthSelector">Select Month: </label>
+      <select id="monthSelector">
+        <option value="Feb 2025">February 2025</option>
+        <option value="Mar 2025">March 2025</option>
+        <option value="Apr 2025">April 2025</option>
+        <option value="May 2025">May 2025</option>
+      </select>
+    </div>
+
+    <!-- Billing Overview Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Roommate</th>
+          <th>Electric Owed</th>
+          <th>Electric Paid</th>
+          <th>Pymnt Plan Extra</th>
+          <th>Outstanding</th>
+        </tr>
+      </thead>
+      <tbody id="billingTableBody">
+        <!-- Monthly data will load here -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="last-updated">
+    Last updated: May 12, 2025
+  </div>
 
   <script>
-    // Each month’s total electric bill and extra fee (for Osa & Precious).
+    // Each month's total electric bill and extra fee (for Osa & Precious).
     // Jay does not owe any extra fee.
     const monthData = {
       "Feb 2025": { electricTotal: 752.00, extraFee: 200 },
-      "Mar 2025": { electricTotal: 777.52, extraFee: 200 }
+      "Mar 2025": { electricTotal: 777.52, extraFee: 200 },
+      "Apr 2025": { electricTotal: 0.00, extraFee: 200 },  // Replace with actual April bill
+      "May 2025": { electricTotal: 0.00, extraFee: 200 }   // Replace with actual May bill
     };
 
     // Payments made so far for each roommate per month.
@@ -89,23 +176,34 @@
         osa: { electric: 194.38 },
         precious: { electric: 100.00 },
         jay: { electric: 100 }
+      },
+      "Apr 2025": {
+        osa: { electric: 0 },      // Update with actual payments
+        precious: { electric: 0 }, // Update with actual payments
+        jay: { electric: 0 }       // Update with actual payments
+      },
+      "May 2025": {
+        osa: { electric: 0 },      // Update with actual payments
+        precious: { electric: 0 }, // Update with actual payments 
+        jay: { electric: 0 }       // Update with actual payments
       }
     };
 
-    const roommates = ["osa", "precious", "jay"];
+    const roommates = ["Osa", "Precious", "Jay"];
 
     function calculateMonthData(selectedMonth) {
       const data = {};
       const { electricTotal, extraFee } = monthData[selectedMonth];
-      const electricShare = electricTotal / 4; // each roommate's share
+      const electricShare = electricTotal / 3; // each roommate's share (assuming 3 roommates)
 
       roommates.forEach(user => {
+        const userLower = user.toLowerCase();
         // Osa & Precious owe extraFee, Jay does not
-        const pymntPlanExtraOwed = (user === "jay") ? 0 : extraFee;
+        const pymntPlanExtraOwed = (userLower === "jay") ? 0 : extraFee;
         const electricOwed = electricShare;
 
         // What they've paid toward electric
-        const userPayments = monthlyPayments[selectedMonth][user] || { electric: 0 };
+        const userPayments = monthlyPayments[selectedMonth][userLower] || { electric: 0 };
         const electricPaid = userPayments.electric;
 
         // Outstanding is total owed minus what they've paid toward electric
@@ -121,14 +219,42 @@
       return data;
     }
 
-    function renderTable() {
+    function calculateTotalOutstanding() {
+      const totals = {};
+      
+      roommates.forEach(user => {
+        let totalOutstanding = 0;
+        
+        // Loop through all months and sum up the outstanding balances
+        Object.keys(monthData).forEach(month => {
+          const userLower = user.toLowerCase();
+          const { electricTotal, extraFee } = monthData[month];
+          const electricShare = electricTotal / 3;
+          const pymntPlanExtraOwed = (userLower === "jay") ? 0 : extraFee;
+          const electricPaid = (monthlyPayments[month][userLower] || {}).electric || 0;
+          
+          const outstanding = (electricShare + pymntPlanExtraOwed) - electricPaid;
+          totalOutstanding += outstanding;
+        });
+        
+        totals[user] = totalOutstanding;
+      });
+      
+      return totals;
+    }
+
+    function renderMonthlyTable() {
       const selectedMonth = document.getElementById("monthSelector").value;
       const monthResults = calculateMonthData(selectedMonth);
       const tbody = document.getElementById("billingTableBody");
       tbody.innerHTML = "";
 
+      let totalOutstanding = 0;
+
       roommates.forEach(user => {
         const rowData = monthResults[user];
+        totalOutstanding += rowData.outstanding;
+        
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${user}</td>
@@ -139,10 +265,69 @@
         `;
         tbody.appendChild(row);
       });
+
+      // Add a total row
+      const totalRow = document.createElement("tr");
+      totalRow.className = "total-row";
+      totalRow.innerHTML = `
+        <td>Total</td>
+        <td colspan="3"></td>
+        <td>$${totalOutstanding.toFixed(2)}</td>
+      `;
+      tbody.appendChild(totalRow);
     }
 
-    document.getElementById("monthSelector").addEventListener("change", renderTable);
-    window.addEventListener("DOMContentLoaded", renderTable);
+    function renderTotalSummary() {
+      const totals = calculateTotalOutstanding();
+      const tbody = document.getElementById("totalSummaryTable");
+      tbody.innerHTML = "";
+      
+      let grandTotal = 0;
+      
+      roommates.forEach(user => {
+        const outstanding = totals[user];
+        grandTotal += outstanding;
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${user}</td>
+          <td class="${outstanding < 0 ? 'negative' : ''}">${outstanding < 0 ? '−$' + Math.abs(outstanding).toFixed(2) : '$' + outstanding.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      // Add grand total row
+      const totalRow = document.createElement("tr");
+      totalRow.className = "total-row";
+      totalRow.innerHTML = `
+        <td>Grand Total</td>
+        <td class="${grandTotal < 0 ? 'negative' : ''}">${grandTotal < 0 ? '−$' + Math.abs(grandTotal).toFixed(2) : '$' + grandTotal.toFixed(2)}</td>
+      `;
+      tbody.appendChild(totalRow);
+    }
+
+    // Toggle monthly details section
+    document.getElementById("toggleDetails").addEventListener("click", function() {
+      const detailsSection = document.getElementById("monthlyDetails");
+      const toggleBtn = document.getElementById("toggleDetails");
+      
+      if (detailsSection.style.display === "block") {
+        detailsSection.style.display = "none";
+        toggleBtn.textContent = "Show Monthly Breakdown";
+      } else {
+        detailsSection.style.display = "block";
+        toggleBtn.textContent = "Hide Monthly Breakdown";
+      }
+    });
+
+    // Event listeners
+    document.getElementById("monthSelector").addEventListener("change", renderMonthlyTable);
+    
+    // Initialize tables on page load
+    window.addEventListener("DOMContentLoaded", function() {
+      renderTotalSummary();
+      renderMonthlyTable();
+    });
   </script>
 </body>
 </html>
